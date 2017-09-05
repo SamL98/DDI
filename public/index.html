@@ -38,6 +38,15 @@
 				});
 			};
 
+			d3.selection.prototype.moveToBack = function() {  
+				return this.each(function() { 
+					var firstChild = this.parentNode.firstChild; 
+					if (firstChild) { 
+						this.parentNode.insertBefore(this, firstChild); 
+					} 
+				});
+			};
+
 			const fullWidth = 1200;
 			const fullHeight = 700;
 
@@ -92,6 +101,18 @@
 				update(root);
 			});
 
+			function normalize(id) {
+				let container = d3.selectAll('#container-' + id);
+				container.remove();
+				d3.select('#node-' + id).attr('has-container', '0');
+
+				d3.select('#node-circle-' + id)
+					.transition().duration(333)
+					.attr("transform", "scale(" + 1.0 + ")")
+					.style("fill", "steelblue");
+				d3.selectAll('#add-' + id).remove();
+			}
+
 			function update(source) {
 				var duration = d3.event && d3.event.altKey ? 5000 : 500;
 
@@ -109,29 +130,63 @@
 				var nodeEnter = node.enter().append("svg:g")
 					.attr("class", "node")
 					.attr("id", function(d) { return "node-" + d.id; })
+					.attr('has-container', '0')
 					.attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-					.on("click", function(d) { toggle(d); update(d); })
+					.on("click", function(d) { 
+						normalize(d.id);
+						toggle(d); 
+						update(d); 
+					})
 					.on("mouseover", function(d) {
+						if (parseInt(d3.select(this).attr('has-container')) == 1) {
+							return;
+						}
+						d3.select(this).attr('has-container', '1');
+
 						d3.select('#node-circle-' + d.id)
 							.transition().duration(333)
 							.style("fill", "indianred")
 							.attr("transform", "scale(" + 1.5 + ")");
 
+
+						let rMod = 15.0*Math.sqrt(2.0);
+
+						d3.select('#node-' + d.id)
+							.append('svg:circle')
+								.attr('class', 'container')
+								.attr('id', 'container-' + d.id)
+								.attr('node', '' + d.id)
+								.attr('cx', 0).attr('cy', 0)
+								.attr('r', '' + ((15.0+rMod)*1.5))
+								.style('fill', 'none').style('stroke', 'black')
+								.style('pointer-events', 'all')
+								.moveToBack()
+								.on('mouseout', function() {
+									let bb = d3.select('#add-' + d.id).node().getBoundingClientRect();
+									let p = {
+										x: d3.event.clientX,
+										y: d3.event.clientY
+									};
+
+									if( bb.left <= p.x && p.x <= bb.right && bb.top <= p.y && p.y <= bb.bottom ) {
+										return;
+									}
+									normalize(d.id);
+								});
+
 						d3.select('#node-' + d.id)
 							.append('svg:circle')
 								.attr('id', 'add-' + d.id)
-								.attr('cy', '-1.5em').attr('cx', '1.5em')
+								.attr('cy', '-' + rMod).attr('cx', rMod)
 								.attr('r', '15')
 								.style('fill', 'url(#add)')
 								.style('stroke', 'steelblue')
-								.moveToFront();
-					})
-					.on("mouseout", function(d) {
-						d3.select('#node-circle-' + d.id)
-							.transition().duration(333)
-							.attr("transform", "scale(" + 1.0 + ")")
-							.style("fill", "steelblue");
-						d3.select('#add-' + d.id).remove();
+								.style('pointer-events', 'all')
+								.moveToFront()
+								.on('click', function() {
+									normalize(d.id);
+									
+								});
 					});
 
 				nodeEnter.append("svg:circle")
@@ -143,6 +198,7 @@
 					.attr("x", function(d) { return d.children || d._children ? -15 : 15; }) // For Danai: chage -10:10 to adjust the distance between node and text
 					.attr("dy", "0.35em")
 					.attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+					.attr('id', function(d) { return 'text-' + d.id; })
 					.text(function(d) { 
 						var nodeText;
 						if (d==root) { nodeText=d.name; }
