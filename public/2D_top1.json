@@ -1,0 +1,34 @@
+{
+	"name": "BaseLine",
+	"children": [
+		{
+			"or": 3.362,
+			"p": 7.04321e-20,
+			"name": "GADOBENATE DIMEGLUMINE",
+			"children": [
+				{
+					"or": 28.2056,
+					"p": 2.13938e-07,
+					"name": "GADOPENTETATE DIMEGLUMINE"
+				}
+			]
+		},
+		{
+			"or": 2.4176,
+			"p": 1.91103e-19,
+			"name": "GADOPENTETATE DIMEGLUMINE",
+			"children": [
+				{
+					"or":  5.0099,
+					"p": 7.24798e-16,
+					"name": "GADOBENATE DIMEGLUMINE"
+				}
+			]
+		},
+		{
+			"or":  6.9015,
+			"p": 9.82797e-41,
+			"name": "GADOBENATE DIMEGLUMINE,GADOPENTETATE DIMEGLUMINE"
+		}
+	]
+}

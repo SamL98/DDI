@@ -1,0 +1,29 @@
+{
+	"name": "BaseLine",
+	"children": [
+		{
+			"or": 3.9832,
+			"name": "SIMVASTATIN",
+			"children": [
+				{
+					"or": 5.9775,
+					"name": "CLARITHROMYCIN"
+				}
+			]
+		},
+		{
+			"or": 2.4076,
+			"name": "CLARITHROMYCIN",
+			"children": [
+				{
+					"or": 13.4866,
+					"name": "SIMVASTATIN"
+				}
+			]
+		},
+		{
+			"or": 21.5592,
+			"name": "SIMVASTATIN,CLARITHROMYCIN"
+		}
+	]
+}

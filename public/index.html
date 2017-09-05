@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+		<link type="text/css" rel="stylesheet" href="stylesheets/style.css"/>
+		<script type="text/javascript" src="/javascripts/d3.js"></script>
+		<script type="text/javascript" src="/javascripts/d3.layout.js"></script>
+	</head>
+	<body>
+		<div id="body">
+		<div id="footer" style = "position:absolute; right: 200px; top: 15px;">
+		<!-- comments: added 10-21-2014 for figure plot, can be deleted recover.                Drug.drug.interaction.                 tree-->
+		<div class="hint" style = "font-style:italic;">
+		<!-- comments: added 10-21-2014 for figure plot, can be deleted recover.               click or option-click to expand or collapse       tree--></div>
+		</div>
+		</div>
+
+		<svg>
+			<defs>
+				<pattern id="add" height="30" width="30">
+					<rect height="30" width="30" fill="lightsteelblue"/>
+					<image xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="add.png" height="30" width="30" x="0" y="0"></image>
+				</pattern>
+			</defs>
+		</svg>
+
+		<!-- comments
+		<div style="font-size:16px;position:absolute;top:150px;right:100px; z-index:500">Odds Ratio cut-off: <input id="tensionInput" style="position:relative;top:3px;" type="range" min="0" max="100" value="85" oninput="tension.value=tensionInput.value">
+		<output id="tension" for="tensionInput">10</output>
+		<div class="hint" style = "font-style:italic; position: absolute; top:30px;right:-1000px; z-index:500">Drag to see details</div>
+		</div>
+		-->
+
+		<script type="text/javascript">
+			d3.selection.prototype.moveToFront = function() {  
+				return this.each(function(){
+					this.parentNode.appendChild(this);
+				});
+			};
+
+			const fullWidth = 1200;
+			const fullHeight = 700;
+
+			var m = [50, 200, 20, 400],
+				w = fullWidth - m[1] - m[3],
+				h = fullHeight - m[0] - m[2],
+				i = 0,
+				root;
+
+			var tree = d3.layout.tree()
+				.size([h, w]);
+
+			var diagonal = d3.svg.diagonal()
+				.projection(function(d) { return [d.y, d.x]; });
+
+			var vis = d3.select("#body").append("svg:svg")
+				.attr("width", fullWidth)
+				.attr("height", fullHeight)
+				.append("svg:g")
+				.attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+
+			d3.json("3D_top2.json", function(drugInterData) {
+				root = drugInterData;
+				root.x0 = h / 2;
+				root.y0 = 0;
+
+				function toggleAll(d) {
+					if (d.children) {
+						d.children.forEach(toggleAll);
+						toggle(d);
+					}
+				}
+
+				// Initialize the display to show a few nodes.
+				root.children.forEach(toggleAll);
+				// toggle(root.children[1]);
+				// toggle(root.children[1].children[2]);
+				// toggle(root.children[4]);
+				// toggle(root.children[4]);
+
+				// display all node with details
+				toggle(root.children[0]);
+				//toggle(root.children[0].children[0]);
+				//toggle(root.children[0].children[1]);
+				toggle(root.children[1]);
+				//toggle(root.children[1].children[0]);
+				//toggle(root.children[1].children[1]);
+				toggle(root.children[2]);
+				//toggle(root.children[2].children[0]);
+				//toggle(root.children[2].children[1]);
+
+				update(root);
+			});
+
+			function update(source) {
+				var duration = d3.event && d3.event.altKey ? 5000 : 500;
+
+				// Compute the new tree layout.
+				var nodes = tree.nodes(root).reverse();
+
+				// Normalize for fixed-depth.
+				nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+				// Update the nodes�
+				var node = vis.selectAll("g.node")
+					.data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+				// Enter any new nodes at the parent's previous position.
+				var nodeEnter = node.enter().append("svg:g")
+					.attr("class", "node")
+					.attr("id", function(d) { return "node-" + d.id; })
+					.attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+					.on("click", function(d) { toggle(d); update(d); })
+					.on("mouseover", function(d) {
+						d3.select('#node-circle-' + d.id)
+							.transition().duration(333)
+							.style("fill", "indianred")
+							.attr("transform", "scale(" + 1.5 + ")");
+
+						d3.select('#node-' + d.id)
+							.append('svg:circle')
+								.attr('id', 'add-' + d.id)
+								.attr('cy', '-1.5em').attr('cx', '1.5em')
+								.attr('r', '15')
+								.style('fill', 'url(#add)')
+								.style('stroke', 'steelblue')
+								.moveToFront();
+					})
+					.on("mouseout", function(d) {
+						d3.select('#node-circle-' + d.id)
+							.transition().duration(333)
+							.attr("transform", "scale(" + 1.0 + ")")
+							.style("fill", "steelblue");
+						d3.select('#add-' + d.id).remove();
+					});
+
+				nodeEnter.append("svg:circle")
+					.attr("r", 1e-6)
+					.attr("id", function(d) { return "node-circle-" + d.id; })
+					.style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+				nodeEnter.append("svg:text")
+					.attr("x", function(d) { return d.children || d._children ? -15 : 15; }) // For Danai: chage -10:10 to adjust the distance between node and text
+					.attr("dy", "0.35em")
+					.attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+					.text(function(d) { 
+						var nodeText;
+						if (d==root) { nodeText=d.name; }
+						else {
+							if (d.or=="N/A") { nodeText=d.name+": "+d.or; }
+							else { nodeText=d.name+": "+Math.round(d.or*100)/100; }
+						}
+						return nodeText; 
+					})
+					.style("fill-opacity", 1e-6);
+
+				// Transition nodes to their new position.
+				var nodeUpdate = node.transition()
+					.duration(duration)
+					.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+				nodeUpdate.select("circle")
+					.attr("r", function(d){ 
+						var or;
+						if (d.or=="N/A") { or = 1; }
+						else if (d.or >=1) { or = Math.sqrt(d.or*10); }
+						else { or = Math.sqrt(10/d.or); }
+						return or;
+					}) // the size of the node, modify to re-generate
+					.style("fill", function(d) {
+						var nodeColor;
+						if (d.p >= 0.05) { nodeColor = "#CCE5FF"; }
+						else if (d.p >= 0.0001) { nodeColor = "#0080FF"; }
+						else { nodeColor = "#0066CC"; }
+						return nodeColor;}
+					); //For Danai: Change the color to any you prefer
+
+				nodeUpdate.select("text")
+					.style("fill-opacity", 1)
+					.style("fill", function(d) { 
+						var textColor;
+						if (d.or > 1) { textColor = "red"; }
+						else if(d.or < 1) { textColor = "green"; }
+						else { textColor = "black"; }
+						return textColor;}
+					); // display text colour
+
+				// Transition exiting nodes to the parent's new position.
+				var nodeExit = node.exit().transition()
+					.duration(duration)
+					.attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+					.remove();
+
+				nodeExit.select("circle")
+					.attr("r", 1e-6);
+
+				nodeExit.select("text")
+					.style("fill-opacity", 1e-6);
+
+				// Update the links�
+				var link = vis.selectAll("path.link")
+					.data(tree.links(nodes), function(d) { return d.target.id; });
+
+				//link.append("svg:text")
+				//.text(function(d) { return d.name; })
+				//.style("fill-opacity", 100);
+
+				// Enter any new links at the parent's previous position.
+				link.enter().insert("svg:path", "g")
+					.attr("class", "link")
+					.attr("d", function(d) {
+						var o = {x: source.x0, y: source.y0};
+						return diagonal({source: o, target: o}); 
+					})
+					.transition()
+					.duration(duration)
+					.attr("d", diagonal);
+
+				//link.append("text")
+				//.text(function (d) { return d.name; }); 
+
+				// Transition links to their new position.
+				link.transition()
+					.duration(duration)
+					.attr("d", diagonal);
+
+				// Transition exiting nodes to the parent's new position.
+				link.exit().transition()
+					.duration(duration)
+					.attr("d", function(d) {
+						var o = {x: source.x, y: source.y};
+						return diagonal({source: o, target: o}); 
+					})
+					.remove();
+
+				// Stash the old positions for transition.
+				nodes.forEach(function(d) {
+					d.x0 = d.x;
+					d.y0 = d.y; 
+				});
+			}
+
+			// Toggle children.
+			function toggle(d) {
+				if (d.children) {
+					d._children = d.children;
+					d.children = null;
+				} else {
+					d.children = d._children;
+					d._children = null;
+				}
+			}
+		</script>
+	</body>
+</html>
