@@ -2,6 +2,8 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 		<link type="text/css" rel="stylesheet" href="stylesheets/style.css"/>
 		<script type="text/javascript" src="/javascripts/d3.js"></script>
 		<script type="text/javascript" src="/javascripts/d3.layout.js"></script>
@@ -23,6 +25,8 @@
 				</pattern>
 			</defs>
 		</svg>
+
+		<script type="text/javascript" src="/javascripts/add.js"></script>
 
 		<!-- comments
 		<div style="font-size:16px;position:absolute;top:150px;right:100px; z-index:500">Odds Ratio cut-off: <input id="tensionInput" style="position:relative;top:3px;" type="range" min="0" max="100" value="85" oninput="tension.value=tensionInput.value">
@@ -158,7 +162,7 @@
 								.attr('node', '' + d.id)
 								.attr('cx', 0).attr('cy', 0)
 								.attr('r', '' + ((15.0+rMod)*1.5))
-								.style('fill', 'none').style('stroke', 'black')
+								.style('fill', 'none').style('stroke', 'none')
 								.style('pointer-events', 'all')
 								.moveToBack()
 								.on('mouseout', function() {
@@ -185,7 +189,7 @@
 								.moveToFront()
 								.on('click', function() {
 									normalize(d.id);
-									
+									displayAddBox();
 								});
 					});
 
