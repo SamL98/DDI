@@ -16,12 +16,62 @@ function displayAddBox() {
         .attr('for', 'drug')
         .text('Enter the drug you want to add:');
 
+    var matches = []
     drugGroup.append('input')
         .attr('class', 'form-control')
+        .attr('id', 'add-input')
         .attr('type', 'drug')
         .style('border-radius', '5px')
         .style('font-family', 'Arial')
-        .style('margin', '10px 0 10px 0');
+        .style('margin', '10px 0 10px 0')
+        .on('input', () => {
+            let drugInput = document.getElementById('add-input').value.toLowerCase()
+            if (drugInput.length >= 2) {
+                drugs.forEach(drug => {
+                    if (matches.includes(drug)) {
+                        if (!drug.toLowerCase().startsWith(drugInput)) {
+                            console.log(drug, drugInput, drug.toLowerCase().startsWith(drugInput))
+                            console.log(matches.indexOf(drug))
+                            matches.splice(matches.indexOf(drug), 1)
+                            d3.select('#' + drug).remove()
+                        }
+                    } else {
+                        if (drug.toLowerCase().startsWith(drugInput)) {
+                            matches.push(drug)
+                        }
+                    }
+                })
+
+                if (matches.length > 0) {
+                    if (!dropdownPresent) {
+                        dropdownPresent = true
+                        drugGroup.insert('div', '#drug-add')
+                            .attr('id', 'drug-dropdown')
+                            .style('overflow-y', 'scroll')
+                            .style('border-width', '5px')
+                            .style('border-color', 'steelblue')
+                            .style('border-radius', '5px')
+                            .style('border-style', 'solid')
+                    }
+
+                    d3.select('#drug-dropdown').selectAll('p')
+                        .data(matches).enter().append('p')
+                            .attr('id', d => { return d })
+                            .style('font-family', 'Arial')
+                            .style('font-size', '1em')
+                            .style('text-align', 'middle')
+                            .style('background-color', 'white')
+                            .style('margin', '0 0 0 0')
+                            .style('padding-left', '10px')
+                            .style('cursor', 'pointer')
+                            .text(d => { return d })
+                    return
+                }
+            }
+            
+            dropdownPresent = false
+            d3.select('#drug-dropdown').remove()
+        });
 
     drugGroup.append('button')
         .attr('id', 'drug-add')
@@ -34,10 +84,13 @@ function displayAddBox() {
             form.remove()
         });
 
-    getDrugs();
+    if (drugs.length == 0) {
+        getDrugs()
+    }
 }
 
 var drugs = []
+var dropdownPresent = false
 
 function getDrugs() {
     var ws = new WebSocket('ws://' + location.host + '/drugs');
@@ -50,13 +103,5 @@ function getDrugs() {
             return
         }
         drugs.push(JSON.parse(e.data).Name)
-    }
-    ws.onclose = e => {
-        d3.select('#add-input-group')
-            .append('select')
-            .selectAll('option').data(drugs)
-            .enter().append('option')
-            .attr('value', d => { return d })
-            .text(d => { return d });
     }
 }
