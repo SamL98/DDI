@@ -1,4 +1,4 @@
-function displayAddBox() {
+function displayAddBox(source) {
     let form = d3.select('body').append('div')
         .attr('id', 'add-input-group')
         .style('position', 'absolute')
@@ -6,15 +6,32 @@ function displayAddBox() {
         .style('width', '90%').style('height', '40px')
         .style('background-color', 'lightgray')
         .style('background-color', 'lightgray')
-        .style('margin', '10px 5% 20px 5%');
+        .style('margin', '10px 5% 20px 5%')
 
     let drugGroup = form.append('div')
         .attr('position', 'grid')
-        .style('background-color', 'lightgray');
+        .style('background-color', 'lightgray')
 
     drugGroup.append('label')
         .attr('for', 'drug')
-        .text('Enter the drug you want to add:');
+        .style('padding', '5px 5px 0 5px')
+        .text('Enter the drug you want to add:')
+
+    drugGroup.append('input')
+        .attr('type', 'button')
+        .attr('value', '^')
+        .style('float', 'right')
+        .style('background-color', 'lightgray')
+        .style('color', 'black')
+        .style('padding', '0 0 0 0')
+        .style('border', 'none')
+        .style('width', '20px').style('height', '20px')
+        .style('margin', '5px 5px 0 0')
+        .on('click', e => {
+            $('#add-input-group').animate({ height: 0 }, 1000, () => {
+                form.remove()
+            })
+        })
 
     var matches = []
     drugGroup.append('input')
@@ -30,8 +47,6 @@ function displayAddBox() {
                 drugs.forEach(drug => {
                     if (matches.includes(drug)) {
                         if (!drug.toLowerCase().startsWith(drugInput)) {
-                            console.log(drug, drugInput, drug.toLowerCase().startsWith(drugInput))
-                            console.log(matches.indexOf(drug))
                             matches.splice(matches.indexOf(drug), 1)
                             d3.select('#' + drug).remove()
                         }
@@ -62,9 +77,21 @@ function displayAddBox() {
                             .style('text-align', 'middle')
                             .style('background-color', 'white')
                             .style('margin', '0 0 0 0')
-                            .style('padding-left', '10px')
+                            .style('padding', '10px 3.5px 10px 3.5px')
                             .style('cursor', 'pointer')
                             .text(d => { return d })
+                            .on('click', d => {
+                                console.log(source)
+                                getDrug(d, source.name, drugJSON => {
+                                    if (source.children === undefined) {
+                                        source.children = [drugJSON]
+                                    } else {
+                                        source.children.push(drugJSON)
+                                    }
+                                    update(source)
+                                    form.remove()
+                                })
+                            })
                     return
                 }
             }
@@ -93,7 +120,7 @@ var drugs = []
 var dropdownPresent = false
 
 function getDrugs() {
-    var ws = new WebSocket('ws://' + location.host + '/drugs');
+    var ws = new WebSocket('ws://' + location.host + '/drugs')
     ws.onopen = e => {
         ws.send("Start")
     }
@@ -104,4 +131,20 @@ function getDrugs() {
         }
         drugs.push(JSON.parse(e.data).Name)
     }
+}
+
+function getDrug(drug, base, callback) {
+    var url = 'http://' + location.host + '/drug?\added=' + encodeURIComponent(drug)
+    base.split(",").forEach(name => {
+        url += '&base=' + name
+    })
+
+    $.get(url, data => {
+        let or = parseFloat(data)
+        callback({
+            "or": or,
+            "name": drug,
+            "p": 0.05
+        })
+    })
 }

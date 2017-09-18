@@ -138,6 +138,16 @@
 					.attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
 					.on("click", function(d) { 
 						normalize(d.id);
+						let bb = d3.select('#add-' + d.id).node().getBoundingClientRect();
+						let p = {
+							x: d3.event.clientX,
+							y: d3.event.clientY
+						};
+
+						if (bb.left <= p.x && p.x <= bb.right && bb.top <= p.y && p.y <= bb.bottom) {
+							return;
+						}
+
 						toggle(d); 
 						update(d); 
 					})
@@ -189,7 +199,7 @@
 								.moveToFront()
 								.on('click', function() {
 									normalize(d.id);
-									displayAddBox();
+									displayAddBox(d);
 								});
 					});
 

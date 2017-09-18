@@ -17,6 +17,13 @@ type Drug struct {
 	Name string
 }
 
+type Assoc struct {
+	Base   []int
+	Added  []int
+	Result float64
+}
+
+var sharedSession *mgo.Session
 var drugs []Drug
 
 var upgrader = websocket.Upgrader{
@@ -55,11 +62,42 @@ func DrugHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func DrugInfoHandler(w http.ResponseWriter, r *http.Request) {
+	var baseNames []string
+	baseNames = r.URL.Query()["base"]
+	baseNums := []int{}
+
+	addedName := (r.URL.Query()["added"])[0]
+	var addedNum int
+
+	for _, drug := range drugs {
+		if drug.Name == addedName {
+			addedNum = drug.Id
+		} else {
+			for _, base := range baseNames {
+				if base == drug.Name {
+					baseNums = append(baseNums, drug.Id)
+				}
+			}
+		}
+	}
+
+	var assoc Assoc
+	sharedSession.DB("DDI").C("associations").Find(bson.M{
+		"base":  baseNums,
+		"added": addedNum,
+	}).One(&assoc)
+	log.Println(assoc)
+
+	w.Write([]byte(fmt.Sprintf("%f", assoc.Result)))
+}
+
 func main() {
 	session, err := mgo.Dial("localhost:27017")
 	if err != nil {
 		panic(err)
 	}
+	sharedSession = session
 	defer session.Close()
 
 	drugsColl := session.DB("DDI").C("drugs")
@@ -73,6 +111,7 @@ func main() {
 	fs := http.FileServer(http.Dir("public"))
 	http.Handle("/", fs)
 	http.HandleFunc("/drugs", DrugHandler)
+	http.HandleFunc("/drug", DrugInfoHandler)
 
 	log.Println("Starting web server on", *addr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
