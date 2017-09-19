@@ -67,17 +67,19 @@ func DrugInfoHandler(w http.ResponseWriter, r *http.Request) {
 	baseNames = r.URL.Query()["base"]
 	baseNums := []int{}
 
-	addedName := (r.URL.Query()["added"])[0]
-	var addedNum int
+	var addedNames []string
+	addedNames = r.URL.Query()["added"]
+	addedNums := []int{}
 
 	for _, drug := range drugs {
-		if drug.Name == addedName {
-			addedNum = drug.Id
-		} else {
-			for _, base := range baseNames {
-				if base == drug.Name {
-					baseNums = append(baseNums, drug.Id)
-				}
+		for _, baseName := range baseNames {
+			if drug.Name == baseName {
+				baseNums = append(baseNums, drug.Id)
+			}
+		}
+		for _, addedName := range addedNames {
+			if drug.Name == addedName {
+				addedNums = append(addedNums, drug.Id)
 			}
 		}
 	}
@@ -85,7 +87,7 @@ func DrugInfoHandler(w http.ResponseWriter, r *http.Request) {
 	var assoc Assoc
 	sharedSession.DB("DDI").C("associations").Find(bson.M{
 		"base":  baseNums,
-		"added": addedNum,
+		"added": addedNums,
 	}).One(&assoc)
 	log.Println(assoc)
 

@@ -43,20 +43,24 @@ function displayAddBox(source) {
         .style('margin', '10px 0 10px 0')
         .on('input', () => {
             let drugInput = document.getElementById('add-input').value.toLowerCase()
+            // Only find drug matches if the user input is greater than two characters, otherwise it is too long.
             if (drugInput.length >= 2) {
                 drugs.forEach(drug => {
                     if (matches.includes(drug)) {
+                        // If the drug was previously in the matches, remove it if it no longer matches the input.
                         if (!drug.toLowerCase().startsWith(drugInput)) {
                             matches.splice(matches.indexOf(drug), 1)
                             d3.select('#' + drug).remove()
                         }
                     } else {
+                        // Add the drug if it was not a match but now matches the input (only should occur on second letter).
                         if (drug.toLowerCase().startsWith(drugInput)) {
                             matches.push(drug)
                         }
                     }
                 })
 
+                // Only display the dropdown when multiple drugs are matches with the given input.
                 if (matches.length > 0) {
                     if (!dropdownPresent) {
                         dropdownPresent = true
@@ -67,6 +71,7 @@ function displayAddBox(source) {
                             .style('border-color', 'steelblue')
                             .style('border-radius', '5px')
                             .style('border-style', 'solid')
+                            .style('max-height', '350px')
                     }
 
                     d3.select('#drug-dropdown').selectAll('p')
@@ -74,28 +79,32 @@ function displayAddBox(source) {
                             .attr('id', d => { return d })
                             .style('font-family', 'Arial')
                             .style('font-size', '1em')
-                            .style('text-align', 'middle')
                             .style('background-color', 'white')
                             .style('margin', '0 0 0 0')
                             .style('padding', '10px 3.5px 10px 3.5px')
                             .style('cursor', 'pointer')
                             .text(d => { return d })
                             .on('click', d => {
-                                console.log(source)
-                                getDrug(d, source.name, drugJSON => {
-                                    if (source.children === undefined) {
-                                        source.children = [drugJSON]
-                                    } else {
-                                        source.children.push(drugJSON)
-                                    }
-                                    update(source)
-                                    form.remove()
-                                })
+                                var backColor = 'white'
+                                var frontColor = 'black'
+
+                                // If the drug is selected, its background color is steelblue and its foreground color is white.
+                                if (selected.includes(d)) {
+                                    selected.splice(selected.indexOf(d), 1)
+                                } else {
+                                    selected.push(d)
+                                    backColor = 'steelblue'
+                                    frontColor = 'white'
+                                }
+
+                                d3.select('#' + d)
+                                    .style('background-color', backColor)
+                                    .style('color', frontColor)
                             })
                     return
                 }
             }
-            
+
             dropdownPresent = false
             d3.select('#drug-dropdown').remove()
         });
@@ -108,17 +117,29 @@ function displayAddBox(source) {
         .style('float', 'right')
         .text('Add')
         .on('click', () => {
-            form.remove()
+            getDrug(source.name, drugJSON => {
+                // If the source node does not have any children, set it's children to the fetched association.
+                if (source.children === undefined) {
+                    source.children = [drugJSON]
+                } else {
+                    source.children.push(drugJSON)
+                }
+                update(source)
+                form.remove()
+            })
         });
 
+    // Get the drug names if none are present.
     if (drugs.length == 0) {
         getDrugs()
     }
 }
 
+var selected = []
 var drugs = []
 var dropdownPresent = false
 
+// Get the names of all the drugs in the database through a websocket.
 function getDrugs() {
     var ws = new WebSocket('ws://' + location.host + '/drugs')
     ws.onopen = e => {
@@ -133,18 +154,34 @@ function getDrugs() {
     }
 }
 
-function getDrug(drug, base, callback) {
-    var url = 'http://' + location.host + '/drug?\added=' + encodeURIComponent(drug)
+// Get the association between the base drugs and the selected drugs to add.
+function getDrug(base, callback) {
+    var url = 'http://' + location.host + '/drug?stub=stub&'
+
+    selected.forEach(name => {
+        url += '&added=' + encodeURIComponent(name)
+    })
+
     base.split(",").forEach(name => {
-        url += '&base=' + name
+        url += '&base=' + encodeURIComponent(name)
     })
 
     $.get(url, data => {
         let or = parseFloat(data)
+
+        // If the OR is 0.0, then this means no association was found.
+        if (or == 0.0) {
+            alert('There is no existing association between ' + base + ' and ' + selected.join(','))
+            selected = []
+            d3.select('#add-input-group').remove()
+            return
+        }
+
         callback({
             "or": or,
-            "name": drug,
+            "name": selected.join(','),
             "p": 0.05
         })
+        selected = []
     })
 }
