@@ -139,6 +139,7 @@
 					.on("click", function(d) { 
 						normalize(d.id);
 
+						// If the user actually clicked on the add button, do not toggle the current node.
 						let add = d3.select('#add-' + d.id).node()
 						if (add) {
 							let bb = add.getBoundingClientRect();
@@ -156,6 +157,7 @@
 						update(d); 
 					})
 					.on("mouseover", function(d) {
+						// Do nothing of the wrapper container already exists for this node.
 						if (parseInt(d3.select(this).attr('has-container')) == 1) {
 							return;
 						}
@@ -166,9 +168,9 @@
 							.style("fill", "indianred")
 							.attr("transform", "scale(" + 1.5 + ")");
 
-
 						let rMod = 15.0*Math.sqrt(2.0);
 
+						// Add the add button to the current node along with the container to prevent mouseouts.
 						d3.select('#node-' + d.id)
 							.append('svg:circle')
 								.attr('class', 'container')

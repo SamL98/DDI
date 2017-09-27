@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
-	"github.com/gorilla/websocket"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -26,40 +25,34 @@ type Assoc struct {
 var sharedSession *mgo.Session
 var drugs []Drug
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
 func DrugHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	baseNames := r.URL.Query()["base"]
+	baseNums := []int{}
+	query := bson.M{"base": []int{}}
 
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		if fmt.Sprintf("%s", p) == "Start" {
-			for i := range drugs {
-				d, err := json.Marshal(drugs[i])
-				if err != nil {
-					log.Println(err)
-					continue
-				}
-				conn.WriteMessage(messageType, d)
-			}
-			if err := conn.WriteMessage(messageType, []byte("End")); err != nil {
-				log.Println(err)
-				return
+	for _, drug := range drugs {
+		for _, name := range baseNames {
+			if drug.Name == name {
+				baseNums = append(baseNums, drug.Id)
+				query["base"] = append(query["base"].([]int), drug.Id)
 			}
 		}
 	}
+
+	var assocs []Assoc
+	sharedSession.DB("DDI").C("associations").Find(query).All(&assocs)
+
+	drugNames := []string{}
+	for _, assoc := range assocs {
+		addedNames := []string{}
+		for _, added := range assoc.Added {
+			var drug Drug
+			sharedSession.DB("DDI").C("drugs").Find(bson.M{"id": added}).One(&drug)
+			addedNames = append(addedNames, drug.Name)
+		}
+		drugNames = append(drugNames, strings.Join(addedNames, ","))
+	}
+	w.Write([]byte(strings.Join(drugNames, ":")))
 }
 
 func DrugInfoHandler(w http.ResponseWriter, r *http.Request) {

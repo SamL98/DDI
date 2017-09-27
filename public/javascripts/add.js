@@ -1,4 +1,6 @@
 function displayAddBox(source) {
+    drugs = []
+
     let form = d3.select('body').append('div')
         .attr('id', 'add-input-group')
         .style('position', 'absolute')
@@ -118,7 +120,7 @@ function displayAddBox(source) {
         .text('Add')
         .on('click', () => {
             getDrug(source.name, drugJSON => {
-                // If the source node does not have any children, set it's children to the fetched association.
+                // If the source node does not have any children, set it's children to the fetched association
                 if (source.children === undefined) {
                     source.children = [drugJSON]
                 } else {
@@ -131,7 +133,13 @@ function displayAddBox(source) {
 
     // Get the drug names if none are present.
     if (drugs.length == 0) {
-        getDrugs()
+        var currNode = source.parent
+        var bases = source.name.split(',')
+        while (currNode.name != "BaseLine") {
+            bases.push(currNode.name.split(','))
+            currNode = currNode.parent
+        }
+        getDrugs(bases)
     }
 }
 
@@ -139,24 +147,24 @@ var selected = []
 var drugs = []
 var dropdownPresent = false
 
-// Get the names of all the drugs in the database through a websocket.
-function getDrugs() {
-    var ws = new WebSocket('ws://' + location.host + '/drugs')
-    ws.onopen = e => {
-        ws.send("Start")
-    }
-    ws.onmessage = e => {
-        if (e.data === "End") {
-            ws.close()
-            return
+// Get the names of the drugs that have a saved association with the selected drugs
+function getDrugs(base, callback) {
+    var url = 'http://' + location.host + '/drugs?stub=stub'
+    base.forEach(name => {
+        url += '&base=' + encodeURIComponent(name)
+    })
+
+    $.get(url, data => {
+        drugs = data.split(':')
+        if (drugs.length == 0) {
+            alert("There are no associations with the base of " + base.join(','))
         }
-        drugs.push(JSON.parse(e.data).Name)
-    }
+    })
 }
 
 // Get the association between the base drugs and the selected drugs to add.
 function getDrug(base, callback) {
-    var url = 'http://' + location.host + '/drug?stub=stub&'
+    var url = 'http://' + location.host + '/drug?stub=stub'
 
     selected.forEach(name => {
         url += '&added=' + encodeURIComponent(name)
