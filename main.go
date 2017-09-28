@@ -102,6 +102,7 @@ func getEnv() map[string]string {
 func main() {
 	env := getEnv()
 	dbURL := env["MONGODB_URI"]
+	dbName := env["DBNAME"]
 
 	session, err := mgo.Dial(dbURL)
 	if err != nil {
@@ -110,7 +111,7 @@ func main() {
 	sharedSession = session
 	defer session.Close()
 
-	drugsColl := session.DB("DDI").C("drugs")
+	drugsColl := session.DB(dbName).C("drugs")
 
 	drugs = []Drug{}
 	drugsColl.Find(bson.M{}).All(&drugs)
