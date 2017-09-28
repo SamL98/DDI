@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -103,6 +102,7 @@ func main() {
 	env := getEnv()
 	dbURL := env["MONGODB_URI"]
 	dbName := env["DBNAME"]
+	envPort := env["PORT"]
 
 	session, err := mgo.Dial(dbURL)
 	if err != nil {
@@ -116,16 +116,18 @@ func main() {
 	drugs = []Drug{}
 	drugsColl.Find(bson.M{}).All(&drugs)
 
-	var addr = flag.String("addr", ":8080", "The addr of the application.")
-	flag.Parse()
+	addr := ":" + envPort
+	if envPort == "" || envPort == "8080" {
+		addr = ":8080"
+	}
 
 	fs := http.FileServer(http.Dir("public"))
 	http.Handle("/", fs)
 	http.HandleFunc("/drugs", DrugHandler)
 	http.HandleFunc("/drug", DrugInfoHandler)
 
-	log.Println("Starting web server on", *addr)
-	if err := http.ListenAndServe(*addr, nil); err != nil {
+	log.Println("Starting web server on", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
 }
