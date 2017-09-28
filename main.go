@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"gopkg.in/mgo.v2"
@@ -87,8 +88,22 @@ func DrugInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("%f", assoc.Result)))
 }
 
+func getEnv() map[string]string {
+	envvars := make(map[string]string)
+	for _, item := range os.Environ() {
+		splits := strings.Split(item, "=")
+		key := splits[0]
+		val := splits[1]
+		envvars[key] = val
+	}
+	return envvars
+}
+
 func main() {
-	session, err := mgo.Dial("localhost:27017")
+	env := getEnv()
+	dbURL := env["MONGODB_URI"]
+
+	session, err := mgo.Dial(dbURL)
 	if err != nil {
 		panic(err)
 	}
