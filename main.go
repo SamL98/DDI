@@ -52,6 +52,7 @@ func DrugHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		drugNames = append(drugNames, strings.Join(addedNames, ","))
 	}
+
 	w.Write([]byte(strings.Join(drugNames, ":")))
 }
 

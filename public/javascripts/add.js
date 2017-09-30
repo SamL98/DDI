@@ -136,7 +136,7 @@ function displayAddBox(source) {
         var currNode = source.parent
         var bases = source.name.split(',')
         while (currNode.name != "BaseLine") {
-            bases.push(currNode.name.split(','))
+            bases.push.apply(bases, currNode.name.split(','))
             currNode = currNode.parent
         }
         getDrugs(bases)
