@@ -7,6 +7,9 @@
 		<link type="text/css" rel="stylesheet" href="stylesheets/style.css"/>
 		<script type="text/javascript" src="/javascripts/d3.js"></script>
 		<script type="text/javascript" src="/javascripts/d3.layout.js"></script>
+		<script type="text/javascript" src="/javascripts/parser.js">
+			parse()
+		</script>
 	</head>
 	<body>
 		<div id="body">
@@ -26,7 +29,7 @@
 			</defs>
 		</svg>
 
-		<script type="text/javascript" src="/javascripts/add.js"></script>
+		<!--<script type="text/javascript" src="/javascripts/add.js"></script>-->
 
 		<!-- comments
 		<div style="font-size:16px;position:absolute;top:150px;right:100px; z-index:500">Odds Ratio cut-off: <input id="tensionInput" style="position:relative;top:3px;" type="range" min="0" max="100" value="85" oninput="tension.value=tensionInput.value">
@@ -156,7 +159,7 @@
 						toggle(d); 
 						update(d); 
 					})
-					.on("mouseover", function(d) {
+					/*.on("mouseover", function(d) {
 						// Do nothing of the wrapper container already exists for this node.
 						if (parseInt(d3.select(this).attr('has-container')) == 1) {
 							return;
@@ -207,7 +210,7 @@
 									normalize(d.id);
 									displayAddBox(d);
 								});
-					});
+					});*/
 
 				nodeEnter.append("svg:circle")
 					.attr("r", 1e-6)

@@ -121,7 +121,7 @@ function displayAddBox(source) {
         .on('click', () => {
             getDrug(source.name, drugJSON => {
                 // If the source node does not have any children, set it's children to the fetched association
-                if (source.children === undefined) {
+                if (!source.children) {
                     source.children = [drugJSON]
                 } else {
                     source.children.push(drugJSON)

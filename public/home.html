@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <title>DDI</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    </head>
+    <body>
+        <script>
+            function submit() {
+                let select = document.getElementById('class-select')
+                let classVal = select.options[select.selectedIndex].value
+                let rank = document.getElementById('rank-input').value
+                console.log(classVal, rank)
+                window.location.href = '/show?class=' + encodeURIComponent(classVal) + '&rank=' + encodeURIComponent(rank)
+            }
+        </script>
+        <div id="container">
+            <h1>DDI</h1>
+            <p>Select the class of interaction: </p>
+            <select class="form-control" id="class-select">
+                <option>S1</option>
+                <option>S2</option>
+                <option>S3</option>
+                <option>S4</option>
+                <option>S5</option>
+                <option>S6</option>
+            </select>
+            <p>Enter the OR rank: </p>
+            <input type="text" class="form-control" id="rank-input" autocomplete="off">
+            <button id="submitBtn" type="submit" class="btn btn-primary" onclick="submit()">Submit</button>
+        </div>
+    </body>
+</html>
+<style>
+    @font-face {
+        font-family: "Avenir Next";
+        src: url("avenir.otf") format("opentype");
+    }
+    #container {
+        margin: 15% 20% 15% 20%;
+    }
+    h1, p {
+        font-family: "Avenir Next";
+    }
+    select, input {
+        margin-bottom: 20px;
+    }
+    button {
+        float: right;
+        cursor: pointer;
+    }
+</style>
