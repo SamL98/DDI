@@ -1,8 +1,9 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"log"
+	"strings"
 )
 
 type AssocPair struct {
@@ -92,16 +93,14 @@ func Perms3(src []string) []AssocPair {
 	}
 }
 
-func GetPerms(class string, rank int) []byte {
+func GetPerms(class string, rank int) string {
 	firstAssocs := []Assoc{}
-	assocs := []Assoc{}
 
 	if err := FetchAssociations(class, int(rank), &firstAssocs); err != nil {
 		log.Println("Error fetching association for class and rank ", class, rank)
 	}
 
 	firstAssoc := firstAssocs[len(firstAssocs)-1]
-	log.Println(firstAssoc)
 
 	if len(firstAssoc.Base) > 0 && firstAssoc.Base[0] == "0" {
 		firstAssoc.Base = []string{}
@@ -113,24 +112,32 @@ func GetPerms(class string, rank int) []byte {
 	}
 
 	perms := []AssocPair{AssocPair{[]string{}, drugs}}
+
 	if len(drugs) == 3 {
 		perms = Perms3(drugs)
 	} else if len(drugs) == 2 {
 		perms = Perms2(drugs)
 	}
 
-	for _, pair := range perms {
+	assocStr := ""
+	for i, pair := range perms {
 		assoc := Assoc{}
 		if err := FetchAssociation(pair.Base, pair.Added, &assoc); err != nil {
 			log.Println("Error fetching association for base and added ", pair.Base, pair.Added)
 			continue
 		}
-		assocs = append(assocs, assoc)
+
+		if len(assoc.Base) > 0 {
+			assocStr += strings.Join(assoc.Base, ", ") + "->"
+		} else {
+			assocStr += "BaseLine->"
+		}
+		assocStr += strings.Join(assoc.Added, ", ") + ":" + fmt.Sprintf("%.4f", assoc.Or)
+
+		if i < len(perms)-1 {
+			assocStr += "|"
+		}
 	}
 
-	json, err := json.Marshal(assocs)
-	if err != nil {
-		log.Println("Error marshalling association json ", err)
-	}
-	return json
+	return assocStr
 }

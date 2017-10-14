@@ -7,9 +7,6 @@
 		<link type="text/css" rel="stylesheet" href="stylesheets/style.css"/>
 		<script type="text/javascript" src="/javascripts/d3.js"></script>
 		<script type="text/javascript" src="/javascripts/d3.layout.js"></script>
-		<script type="text/javascript" src="/javascripts/parser.js">
-			parse()
-		</script>
 	</head>
 	<body>
 		<div id="body">
@@ -37,7 +34,7 @@
 		<div class="hint" style = "font-style:italic; position: absolute; top:30px;right:-1000px; z-index:500">Drag to see details</div>
 		</div>
 		-->
-
+		
 		<script type="text/javascript">
 			d3.selection.prototype.moveToFront = function() {  
 				return this.each(function(){
@@ -75,7 +72,39 @@
 				.append("svg:g")
 				.attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-			d3.json("3D_top2.json", function(drugInterData) {
+			function parse() {
+				let drugStr = '{{.drugs}}'
+				var drugJSON = {
+					"name": "BaseLine",
+					"children": []
+				}
+
+				drugStr.split('|').forEach(assoc => {
+					let drugs = assoc.split('->')
+					let base = drugs[0], addedTerms = drugs[1].split(':')
+					let added = addedTerms[0], or = parseFloat(addedTerms[1])
+
+					if (base === "BaseLine") {
+						drugJSON.children.push({
+							"name": added,
+							"or": or
+						})
+					} else {
+						let latestChild = drugJSON.children[drugJSON.children.length-1]
+						if (latestChild.children === undefined) {
+							latestChild.children = []
+						}
+						latestChild.children.push({
+							"name": added,
+							"or": or
+						})
+					}
+				})
+
+				return drugJSON
+			}
+
+			var create = function(drugInterData) {
 				root = drugInterData;
 				root.x0 = h / 2;
 				root.y0 = 0;
@@ -106,7 +135,8 @@
 				//toggle(root.children[2].children[1]);
 
 				update(root);
-			});
+			}
+			create(parse())
 
 			function normalize(id) {
 				let container = d3.selectAll('#container-' + id);
