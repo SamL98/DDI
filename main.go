@@ -18,10 +18,13 @@ func getEnv() map[string]string {
 	return envvars
 }
 
+var dbname string
+
 func main() {
 	env := getEnv()
 	dbURL := env["MONGODB_URI"]
 	envPort := env["PORT"]
+	dbname = env["DBNAME"]
 
 	sess, err := OpenConnection(dbURL)
 	if err != nil {

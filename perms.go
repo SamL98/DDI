@@ -98,6 +98,12 @@ func GetPerms(class string, rank int) string {
 
 	if err := FetchAssociations(class, int(rank), &firstAssocs); err != nil {
 		log.Println("Error fetching association for class and rank ", class, rank)
+		return err.Error()
+	}
+
+	if len(firstAssocs) == 0 {
+		log.Println("No association fetched for class and rank ", class, rank)
+		return "no assoc found"
 	}
 
 	firstAssoc := firstAssocs[len(firstAssocs)-1]
