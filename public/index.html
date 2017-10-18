@@ -79,8 +79,15 @@
 					"children": []
 				}
 
+				if (drugStr[drugStr.length-1] == "|") {
+					drugStr = drugStr.slice(0, drugStr.length-1)
+				}
+				console.log(drugStr)
+
 				drugStr.split('|').forEach(assoc => {
 					let drugs = assoc.split('->')
+					// TODO: See why in perms.go trailing | is added
+
 					let base = drugs[0], addedTerms = drugs[1].split(':')
 					let added = addedTerms[0], or = parseFloat(addedTerms[1])
 
@@ -100,7 +107,7 @@
 						})
 					}
 				})
-
+				
 				return drugJSON
 			}
 
@@ -110,6 +117,7 @@
 				root.y0 = 0;
 
 				function toggleAll(d) {
+					
 					if (d.children) {
 						d.children.forEach(toggleAll);
 						toggle(d);
@@ -351,6 +359,10 @@
 
 			// Toggle children.
 			function toggle(d) {
+				if (!d) {
+					return
+				}
+
 				if (d.children) {
 					d._children = d.children;
 					d.children = null;

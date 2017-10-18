@@ -140,6 +140,7 @@ func GetPerms(class string, rank int) string {
 		}
 		assocStr += strings.Join(assoc.Added, ", ") + ":" + fmt.Sprintf("%.4f", assoc.Or)
 
+		// TODO: Figure out why trailing | is added
 		if i < len(perms)-1 {
 			assocStr += "|"
 		}
