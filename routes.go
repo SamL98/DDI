@@ -37,9 +37,9 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Cannot parse int from ", rankStr)
 		return
 	}
-
 	data := map[string]interface{}{
 		"drugs": GetPerms(class, int(rank)),
 	}
+
 	t.templ.Execute(w, data)
 }

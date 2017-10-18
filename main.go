@@ -41,6 +41,7 @@ func main() {
 
 	http.HandleFunc("/", HomeHandler)
 	http.HandleFunc("/show", IndexHandler)
+	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	log.Println("Starting web server on", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
