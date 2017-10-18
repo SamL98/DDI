@@ -5,6 +5,11 @@
     </head>
     <body>
         <script>
+            window.onload = function() {
+                document.getElementById('class-select').selectedIndex = 4
+                document.getElementById('rank-input').value = "2"
+            }
+
             function submit() {
                 let select = document.getElementById('class-select')
                 let classVal = select.options[select.selectedIndex].value
