@@ -24,7 +24,9 @@ func OpenConnection(url string) (*mgo.Session, error) {
 }
 
 func FetchAssociations(class string, rank int, assocs *([]Assoc)) error {
-	return session.DB(dbname).C(class).Find(bson.M{}).Limit(rank).Sort("-or").All(assocs)
+	return session.DB(dbname).C(class).Find(bson.M{
+		"$where": "function() { return this.or !== Infinity }",
+	}).Limit(rank).Sort("-or").All(assocs)
 }
 
 func FetchAssociation(base []string, added []string, assoc *Assoc) error {
